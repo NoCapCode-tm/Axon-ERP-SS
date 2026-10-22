@@ -23,6 +23,6 @@ adminrouter.route("/updateclass/:id").post(verifyjwt,updateacademicyear)
 adminrouter.route("/updatesection/:id").post(verifyjwt,updateacademicyear)
 
 //delete api
-adminrouter.route("/deleteacademicyear").post(verifyjwt,deleteacademicyear)
-adminrouter.route("/deleteacademicyear").post(verifyjwt,deleteacademicyear)
-adminrouter.route("/deleteacademicyear").post(verifyjwt,deleteacademicyear)
+adminrouter.route("/deleteacademicyear/:id").post(verifyjwt,deleteacademicyear)
+adminrouter.route("/deleteclass/:id").post(verifyjwt,deleteclass)
+adminrouter.route("/deletesection/:id").post(verifyjwt,deletesection)

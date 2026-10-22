@@ -198,3 +198,195 @@ export const createsection = asynchandler(async(req,res)=>{
  .json(new Apiresponse(200,"Class Created Successfully",sec.rows[0]))
 
 })
+export const getclass = asynchandler(async(req,res)=>{
+  const school = req.user
+  if(!school){
+    throw new Apierror(401,"School not Authorized")
+  }
+
+  const cl = await pool.query('SELECT * FROM CLASS WHERE school_id = $1 AND is_deleted = $2',[school.id,false])
+
+  res.status(200)
+  .json(new Apiresponse(200,"Academic year added",cl.rows[0]))
+})
+export const getsection= asynchandler(async(req,res)=>{
+  const school = req.user
+  if(!school){
+    throw new Apierror(401,"School not Authorized")
+  }
+
+  const sc = await pool.query('SELECT * FROM SECTION WHERE school_id = $1 AND is_deleted = $2',[school.id,false])
+
+  res.status(200)
+  .json(new Apiresponse(200,"Academic year added",sc.rows[0]))
+})
+
+export const updateclass = asynchandler(async (req, res) => {
+    const school = req.user;
+
+    if (!school) {
+        throw new Apierror(401, "School not Authorized");
+    }
+
+    const { id } = req.params;
+    const { name, max_size } = req.body;
+
+    if (!id || !max_size) {
+        throw new Apierror(400, "Valid class ID is required");
+    }
+
+    const className = String(name ?? "").trim();
+    const maxSize = Number(max_size);
+
+    if (
+        !className ||
+        maxSize <= 0
+    ) {
+        throw new Apierror(
+            400,
+            "Please provide a valid class name and positive maximum size"
+        );
+    }
+
+    const result = await pool.query(
+        `UPDATE CLASS
+         SET class_name = $1,
+             max_size = $2
+         WHERE class_id = $3
+           AND school_id = $4
+           AND is_deleted = false
+         RETURNING *`,
+        [className, maxSize, id, school.id]
+    );
+
+    if (result.rowCount === 0) {
+        throw new Apierror(
+            404,
+            "Class not found or does not belong to this school"
+        );
+    }
+
+    return res.status(200).json(
+        new Apiresponse(
+            200,
+            "Class updated successfully",
+            result.rows[0]
+        )
+    );
+});
+
+
+export const updatesection = asynchandler(async (req, res) => {
+    const school = req.user;
+
+    if (!school) {
+        throw new Apierror(401, "School not Authorized");
+    }
+
+    const { id } = req.params;
+    const { name, size } = req.body;
+
+    if (!id || !size) {
+        throw new Apierror(400, "Valid section ID is required");
+    }
+
+    if (
+        !name ||
+        size<= 0
+    ) {
+        throw new Apierror(
+            400,
+            "Please provide a valid section name and positive capacity"
+        );
+    }
+
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const sectionResult = await client.query(
+            `UPDATE SECTION
+             SET section_name = $1
+             WHERE section_id = $2
+               AND school_id = $3
+             RETURNING *`,
+            [name, id, school.id]
+        );
+
+        if (sectionResult.rowCount === 0) {
+            throw new Apierror(
+                404,
+                "Section not found or does not belong to this school"
+            );
+        }
+
+        const capacityResult = await client.query(
+            `UPDATE CLASS_SECTION
+             SET max_capacity = $1
+             WHERE section_id = $2
+               AND school_id = $3
+             RETURNING class_section_id`,
+            [size, id, school.id]
+        );
+
+        await client.query("COMMIT");
+
+        return res.status(200).json(
+            new Apiresponse(
+                200,
+                "Section updated successfully",
+                {
+                    section: sectionResult.rows[0],
+                    updatedClassSections: capacityResult.rowCount,
+                }
+            )
+        );
+    } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+    } finally {
+        client.release();
+    }
+});
+
+export const deleteclass = asynchandler(async(req,res)=>{
+  const school = req.user
+  if(!school){
+    throw new Apierror(401,"School not Authorized")
+  }
+  const { id } = req.params;
+
+  const cl = await pool.query(
+        `UPDATE ACADEMIC_YEAR
+         SET is_deleted = $1,
+         WHERE class_id = $5
+           AND school_id = $6
+         RETURNING *`,
+        [true, id, school.id]
+    );
+
+
+  res.status(200)
+  .json(new Apiresponse(200,"Academic year deleted",cl.rows[0]))
+})
+export const deletesection = asynchandler(async(req,res)=>{
+  const school = req.user
+  if(!school){
+    throw new Apierror(401,"School not Authorized")
+  }
+  const { id } = req.params;
+
+  const sec = await pool.query(
+        `UPDATE ACADEMIC_YEAR
+         SET is_deleted = $1,
+         WHERE section_id = $5
+           AND school_id = $6
+         RETURNING *`,
+        [true, id, school.id]
+    );
+
+
+  res.status(200)
+  .json(new Apiresponse(200,"Academic year deleted",sec.rows[0]))
+})
