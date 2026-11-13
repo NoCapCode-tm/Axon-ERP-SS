@@ -390,3 +390,248 @@ export const deletesection = asynchandler(async(req,res)=>{
   res.status(200)
   .json(new Apiresponse(200,"Academic year deleted",sec.rows[0]))
 })
+
+export const createsubject = asynchandler(async(req,res)=>{
+   const school = req.user
+  if(!school){
+    throw new Apierror(401,"School not Authorized")
+  }
+  
+  const {name , classes} = req.body
+
+  const subjectName = String(name ?? "").trim();
+
+const words = subjectName
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .split(/\s+/)
+    .filter(Boolean);
+
+const base_code = words.length > 1
+    ? words.map(word => word[0]).join("").toUpperCase()
+    : words[0]?.slice(0, 4).toUpperCase() || "";
+
+  const existing_sub = await pool.query('SELECT * FROM SUBJECT WHERE subject_code = $1',[base_code])
+  if(existing_sub.rows.length > 0){
+    throw new Apierror(400,"Subject already exists")
+  }
+
+  const sub = await pool.query(`INSERT INTO SUBJECT(subject_name , subject_code ,school_id) VALUES ($1,$2,$3) RETURNING *`,[name,base_code,school.id])
+  
+   for (const cls of classes){
+    const cl = await pool.query('SELECT * FROM CLASS WHERE class_id = $1',[cls])
+    const existingcl = await pool.query('SELECT * FROM CLASS_SUBJECT WHERE class_id = $1 AND subject_id=$2 AND school_id = $3 ',[cls,sub.rows[0],school.id])
+    if(existingcl.rows.length==0){
+      const class_sub_code = `${base_code}-0${cl.rows[0].class_name}`
+      const cl_sub = await pool.query('INSERT INTO CLASS_SUBJECT(subject_id,class_id,school_id,class_subject_code) VALUES ($1,$2,$3,$4) RETURNING *',[sub.rows[0].subject_id,cls,school.id,class_sub_code]);
+    }else{
+      continue
+    }
+  }
+
+  res.status(200)
+  .json(new Apiresponse(200,"Subject added Successfully",[sub.rows[0]]))
+})
+
+export const getsubject = asynchandler(async(req,res)=>{
+    const school = req.user
+  if(!school){
+    throw new Apierror(401,"School not Authorized")
+  }
+
+  const sub = await pool.query('SELECT * FROM SUBJECT WHERE school_id = $1 AND is_deleted = $2',[school.id,false])
+
+  res.status(200)
+  .json(new Apiresponse(200,"Subjects Fetched Successfully",sub.rows[0]))
+})
+
+
+export const updatesubject = asynchandler(async (req, res) => {
+  const school = req.user;
+
+  if (!school) {
+    throw new Apierror(401, "School not Authorized");
+  }
+
+  const { subject_id } = req.params;
+  const { name, classes } = req.body;
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // 1. Check whether subject exists and belongs to this school
+    const existingSubject = await client.query(
+      `SELECT * FROM SUBJECT 
+       WHERE subject_id = $1 AND school_id = $2`,
+      [subject_id, school.id]
+    );
+
+    if (existingSubject.rows.length === 0) {
+      throw new Apierror(404, "Subject not found");
+    }
+
+    const subject = existingSubject.rows[0];
+
+    // 2. Generate subject code if name is provided
+    let subjectName = subject.subject_name;
+    let base_code = subject.subject_code;
+
+    if (name !== undefined) {
+      subjectName = String(name).trim();
+
+      if (!subjectName) {
+        throw new Apierror(400, "Subject name cannot be empty");
+      }
+
+      const words = subjectName
+        .replace(/[^a-zA-Z0-9\s]/g, "")
+        .split(/\s+/)
+        .filter(Boolean);
+
+      base_code =
+        words.length > 1
+          ? words.map(word => word[0]).join("").toUpperCase()
+          : words[0]?.slice(0, 4).toUpperCase() || "";
+
+      if (!base_code) {
+        throw new Apierror(400, "Invalid subject name");
+      }
+
+      // 3. Check duplicate subject code (excluding current subject)
+      const duplicate = await client.query(
+        `SELECT subject_id FROM SUBJECT
+         WHERE subject_code = $1
+         AND school_id = $2
+         AND subject_id <> $3`,
+        [base_code, school.id, subject_id]
+      );
+
+      if (duplicate.rows.length > 0) {
+        throw new Apierror(400, "Subject already exists");
+      }
+    }
+
+    // 4. Update subject details
+    const updatedSubject = await client.query(
+      `UPDATE SUBJECT
+       SET subject_name = $1,
+           subject_code = $2
+       WHERE subject_id = $3
+       AND school_id = $4
+       RETURNING *`,
+      [subjectName, base_code, subject_id, school.id]
+    );
+
+    // 5. Update existing CLASS_SUBJECT mappings
+    // if subject code changes, update their class_subject_code too
+    await client.query(
+      `UPDATE CLASS_SUBJECT cs
+       SET class_subject_code = $1 || '-0' || c.class_name
+       FROM CLASS c
+       WHERE cs.class_id = c.class_id
+       AND cs.subject_id = $2
+       AND cs.school_id = $3`,
+      [base_code, subject_id, school.id]
+    );
+
+    // 6. Update class associations only if classes is provided
+    if (classes !== undefined) {
+
+      if (!Array.isArray(classes)) {
+        throw new Apierror(400, "Classes must be an array");
+      }
+
+      // Remove duplicate class IDs
+      const uniqueClasses = [...new Set(classes)];
+
+      // Validate that all classes belong to this school
+      const validClasses = await client.query(
+        `SELECT class_id, class_name
+         FROM CLASS
+         WHERE class_id = ANY($1::int[])
+         AND school_id = $2`,
+        [uniqueClasses, school.id]
+      );
+
+      if (validClasses.rows.length !== uniqueClasses.length) {
+        throw new Apierror(400, "One or more classes are invalid");
+      }
+
+      // Remove associations that are no longer required
+      await client.query(
+        `DELETE FROM CLASS_SUBJECT
+         WHERE subject_id = $1
+         AND school_id = $2
+         AND NOT (class_id = ANY($3::int[]))`,
+        [subject_id, school.id, uniqueClasses]
+      );
+
+      // Add newly selected class associations
+      for (const cls of validClasses.rows) {
+
+        const existingMapping = await client.query(
+          `SELECT class_subject_id
+           FROM CLASS_SUBJECT
+           WHERE class_id = $1
+           AND subject_id = $2
+           AND school_id = $3`,
+          [cls.class_id, subject_id, school.id]
+        );
+
+        if (existingMapping.rows.length === 0) {
+
+          const class_sub_code =
+            `${base_code}-0${cls.class_name}`;
+
+          await client.query(
+            `INSERT INTO CLASS_SUBJECT
+             (subject_id, class_id, school_id, class_subject_code)
+             VALUES ($1, $2, $3, $4)`,
+            [
+              subject_id,
+              cls.class_id,
+              school.id,
+              class_sub_code
+            ]
+          );
+        }
+      }
+    }
+
+    // 7. Get updated class associations
+    const updatedClasses = await client.query(
+      `SELECT cs.*, c.class_name
+       FROM CLASS_SUBJECT cs
+       JOIN CLASS c ON c.class_id = cs.class_id
+       WHERE cs.subject_id = $1
+       AND cs.school_id = $2`,
+      [subject_id, school.id]
+    );
+
+    await client.query("COMMIT");
+
+    return res.status(200).json(
+      new Apiresponse(200, "Subject updated successfully", {
+        subject: updatedSubject.rows[0],
+        classes: updatedClasses.rows
+      })
+    );
+
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+});
+
+// export const deletesubject = asynchandler(async(req,res)=>{
+   
+// })
+
+export const assignclassteacher = asynchandler(async(req,res)=>{
+   
+})
+
+
