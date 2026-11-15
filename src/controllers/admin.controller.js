@@ -631,7 +631,66 @@ export const updatesubject = asynchandler(async (req, res) => {
 // })
 
 export const assignclassteacher = asynchandler(async(req,res)=>{
+   const school = req.user;
+
+  if (!school) {
+    throw new Apierror(401, "School not Authorized");
+  }
+
+  const {cl , section ,teacher,academic} = req.body
+  if(!cl || !section || !teacher ||!academic){
+    throw new Apierror(400,"Please fill all the required fields")
+  }
+   
+  const cs_id = await pool.query(`SELECT * FROM CLASS_SECTION_ID WHERE class_id = $1 AND section_id = $2`,[cl,section])
+  const assign = await pool.query(`INSERT INTO TEACHER_CLASS_SECTION(teacher_id,academic_year_id,class_section_id,school_id) VALUES ($1,$2,$3,$4) RETURNING *`,[teacher,academic,cs_id,school.id])
+  
+  if(assign.rows[0] <1){
+    throw new Apierror(400,"Teacher not Assigned")
+  }
+
+  res.status(200)
+  .json(new Apiresponse(200,"Teacher Assigned Successfully",assign.rows[0]))
+
+})
+
+export const assignclasssubjectteacher = asynchandler(async(req,res)=>{
+   const school = req.user;
+
+  if (!school) {
+    throw new Apierror(401, "School not Authorized");
+  }
+
+  const {cl , section ,teacher,academic ,subject} = req.body
+  if(!cl || !section || !teacher ||!academic ||!subject){
+    throw new Apierror(400,"Please fill all the required fields")
+  }
+   
+  const cs_id = await pool.query(`SELECT * FROM CLASS_SECTION_ID WHERE class_id = $1 AND section_id = $2`,[cl,section])
+  const assign = await pool.query(`INSERT INTO TEACHER_SUBJECT_CLASS(teacher_id,academic_year_id,class_section_id,school_id,subject_id) VALUES ($1,$2,$3,$4,$5) RETURNING *`,[teacher,academic,cs_id,school.id,subject])
+  
+  if(assign.rows[0] <1){
+    throw new Apierror(400,"Teacher not Assigned")
+  }
+
+  res.status(200)
+  .json(new Apiresponse(200,"Teacher Assigned Successfully",assign.rows[0]))
+
+})
+
+
+//Admission
+
+export const studentadmit = asynchandler(async(req,res)=>{
+  const school = req.user;
+  
+  if (!school) {
+    throw new Apierror(401, "School not Authorized");
+  }
+
    
 })
+
+
 
 

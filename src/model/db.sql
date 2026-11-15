@@ -2,41 +2,41 @@ CREATE DATABASE schoolerp;
 
 -- SCHOOL TABLE AND SUPER ADMIN SIDE TABLES
 
-CREATE TABLE SCHOOL(
-    school_id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    branchname VARCHAR(200) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    address VARCHAR(200) ,
-    admin_name VARCHAR(100),
-    logo VARCHAR(100),
-    website_link VARCHAR(200),
-    phone VARCHAR(12),
-    status VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- CREATE TABLE SCHOOL(
+--     school_id BIGSERIAL PRIMARY KEY,
+--     name VARCHAR(100) NOT NULL,
+--     branchname VARCHAR(200) NOT NULL,
+--     email VARCHAR(100) UNIQUE NOT NULL,
+--     address VARCHAR(200) ,
+--     admin_name VARCHAR(100),
+--     logo VARCHAR(100),
+--     website_link VARCHAR(200),
+--     phone VARCHAR(12),
+--     status VARCHAR(100),
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
 
-CREATE TABLE PLAN(
-    plan_id BIGSERIAL PRIMARY KEY,
-    price DECIMAL(10,2),
-    plan_name VARCHAR(100) UNIQUE,
-    duration INT NOT NULL
-);
-CREATE TABLE FEATURES(
-    feature_id BIGSERIAL PRIMARY KEY,
-    feature_name VARCHAR(100) UNIQUE,
-    description VARCHAR(200)
-);
+-- CREATE TABLE PLAN(
+--     plan_id BIGSERIAL PRIMARY KEY,
+--     price DECIMAL(10,2),
+--     plan_name VARCHAR(100) UNIQUE,
+--     duration INT NOT NULL
+-- );
+-- CREATE TABLE FEATURES(
+--     feature_id BIGSERIAL PRIMARY KEY,
+--     feature_name VARCHAR(100) UNIQUE,
+--     description VARCHAR(200)
+-- );
 
-CREATE TABLE PLAN_FEATURES(
-    plan_features_id BIGSERIAL PRIMARY KEY,
-    plan_id BIGINT NOT NULL,
-    feature_id BIGINT NOT NULL,
-    FOREIGN KEY(plan_id) REFERENCES PLAN(plan_id) on DELETE CASCADE,
-    FOREIGN KEY(feature_id) REFERENCES FEATURES(feature_id) on DELETE CASCADE,
-    UNIQUE(plan_id,feature_id)
-);
+-- CREATE TABLE PLAN_FEATURES(
+--     plan_features_id BIGSERIAL PRIMARY KEY,
+--     plan_id BIGINT NOT NULL,
+--     feature_id BIGINT NOT NULL,
+--     FOREIGN KEY(plan_id) REFERENCES PLAN(plan_id) on DELETE CASCADE,
+--     FOREIGN KEY(feature_id) REFERENCES FEATURES(feature_id) on DELETE CASCADE,
+--     UNIQUE(plan_id,feature_id)
+-- );
 
 CREATE TABLE SUBSCRIPTION(
     subscription_id BIGSERIAL PRIMARY KEY,
@@ -49,15 +49,15 @@ CREATE TABLE SUBSCRIPTION(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE TICKET(
-ticket_id BIGSERIAL PRIMARY KEY,
-school_name VARCHAR(100),
-status VARCHAR(50),
-priority VARCHAR(50),
-assignee VARCHAR(50),
-subject VARCHAR(1000),
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- CREATE TABLE TICKET(
+-- ticket_id BIGSERIAL PRIMARY KEY,
+-- school_name VARCHAR(100),
+-- status VARCHAR(50),
+-- priority VARCHAR(50),
+-- assignee VARCHAR(50),
+-- subject VARCHAR(1000),
+-- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
 CREATE TABLE PAYMENT(
    payment_id BIGSERIAL PRIMARY KEY,
    amount DECIMAL(10,2),
@@ -165,40 +165,40 @@ CREATE TABLE TEACHER_EDUCATION(
 
 -- ACADEMIC YEAR AND TIMETABLE
 
-CREATE TABLE ACADEMIC_YEAR(
-    academic_year_id BIGSERIAL PRIMARY KEY,
-    startes_at DATE,
-    end_at DATE,
-    is_active BOOLEAN,
-    academic_year_name VARCHAR(20),
-    school_id BIGINT NOT NULL,
-    FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE,
-    UNIQUE(school_id, academic_year_name)
-);
+-- CREATE TABLE ACADEMIC_YEAR(
+--     academic_year_id BIGSERIAL PRIMARY KEY,
+--     startes_at DATE,
+--     end_at DATE,
+--     is_active BOOLEAN,
+--     academic_year_name VARCHAR(20),
+--     school_id BIGINT NOT NULL,
+--     FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE,
+--     UNIQUE(school_id, academic_year_name)
+-- );
 
-CREATE TABLE CLASS(
-    class_id BIGSERIAL PRIMARY KEY,
-    class_name VARCHAR(20),
-    school_id BIGINT NOT NULL,
-    FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE
-);
-CREATE TABLE SECTION(
-    section_id BIGSERIAL PRIMARY KEY,
-    section_name VARCHAR(50),
-    school_id BIGINT NOT NULL,
-    FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE
-);
-CREATE TABLE CLASS_SECTION(
-    class_section_id BIGSERIAL PRIMARY KEY,
-    class_id BIGINT NOT NULL,
-    section_id BIGINT NOT NULL,
-    school_id BIGINT NOT NULL,
-    FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE,
-    FOREIGN KEY(class_id) REFERENCES CLASS(class_id) on DELETE CASCADE,
-    FOREIGN KEY(section_id) REFERENCES SECTION(section_id) on DELETE CASCADE,
-    max_capacity INT,
-    UNIQUE(school_id,class_id,section_id)
-);
+-- CREATE TABLE CLASS(
+--     class_id BIGSERIAL PRIMARY KEY,
+--     class_name VARCHAR(20),
+--     school_id BIGINT NOT NULL,
+--     FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE
+-- );
+-- CREATE TABLE SECTION(
+--     section_id BIGSERIAL PRIMARY KEY,
+--     section_name VARCHAR(50),
+--     school_id BIGINT NOT NULL,
+--     FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE
+-- );
+-- CREATE TABLE CLASS_SECTION(
+--     class_section_id BIGSERIAL PRIMARY KEY,
+--     class_id BIGINT NOT NULL,
+--     section_id BIGINT NOT NULL,
+--     school_id BIGINT NOT NULL,
+--     FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE,
+--     FOREIGN KEY(class_id) REFERENCES CLASS(class_id) on DELETE CASCADE,
+--     FOREIGN KEY(section_id) REFERENCES SECTION(section_id) on DELETE CASCADE,
+--     max_capacity INT,
+--     UNIQUE(school_id,class_id,section_id)
+-- );
 
 -- TEACHER AND STUDENT ASSIGNMENT TO SECTION
 
@@ -216,38 +216,38 @@ CREATE TABLE STUDENT_CLASS_SECTION(
     UNIQUE(student_id,class_section_id,academic_year_id)
 
 );
-CREATE TABLE TEACHER_CLASS_SECTION(
-    teacher_enrollment_id BIGSERIAL PRIMARY KEY,
-    class_section_id BIGINT NOT NULL,
-    academic_year_id BIGINT NOT NULL,
-    school_id BIGINT NOT NULL,
-    teacher_id BIGINT NOT NULL,
-    FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE,
-    FOREIGN KEY(class_section_id) REFERENCES CLASS_SECTION(class_section_id) on DELETE CASCADE,
-    FOREIGN KEY(academic_year_id) REFERENCES ACADEMIC_YEAR(academic_year_id) on DELETE CASCADE,
-    FOREIGN KEY(teacher_id) REFERENCES TEACHER(teacher_id) on DELETE CASCADE,
-    UNIQUE(teacher_id,class_section_id,academic_year_id)
+-- CREATE TABLE TEACHER_CLASS_SECTION(
+--     teacher_enrollment_id BIGSERIAL PRIMARY KEY,
+--     class_section_id BIGINT NOT NULL,
+--     academic_year_id BIGINT NOT NULL,
+--     school_id BIGINT NOT NULL,
+--     teacher_id BIGINT NOT NULL,
+--     FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE,
+--     FOREIGN KEY(class_section_id) REFERENCES CLASS_SECTION(class_section_id) on DELETE CASCADE,
+--     FOREIGN KEY(academic_year_id) REFERENCES ACADEMIC_YEAR(academic_year_id) on DELETE CASCADE,
+--     FOREIGN KEY(teacher_id) REFERENCES TEACHER(teacher_id) on DELETE CASCADE,
+--     UNIQUE(teacher_id,class_section_id,academic_year_id)
 
-);
+-- );
 
-CREATE TABLE SUBJECT(
-    subject_id BIGSERIAL PRIMARY KEY,
-    subject_name VARCHAR(200),
-    school_id BIGINT NOT NULL,
-    FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE
-);
+-- CREATE TABLE SUBJECT(
+--     subject_id BIGSERIAL PRIMARY KEY,
+--     subject_name VARCHAR(200),
+--     school_id BIGINT NOT NULL,
+--     FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE
+-- );
 
-CREATE TABLE CLASS_SUBJECT(
-    class_subject_id BIGSERIAL PRIMARY KEY,
-    class_id BIGINT NOT NULL,
-    subject_id BIGINT NOT NULL,
-    FOREIGN KEY(class_id) REFERENCES CLASS(class_id) on DELETE CASCADE,
-    FOREIGN KEY(subject_id) REFERENCES SUBJECT(subject_id) on DELETE CASCADE,
-    school_id BIGINT NOT NULL,
-    FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE,
-    UNIQUE(class_id,subject_id)
+-- CREATE TABLE CLASS_SUBJECT(
+--     class_subject_id BIGSERIAL PRIMARY KEY,
+--     class_id BIGINT NOT NULL,
+--     subject_id BIGINT NOT NULL,
+--     FOREIGN KEY(class_id) REFERENCES CLASS(class_id) on DELETE CASCADE,
+--     FOREIGN KEY(subject_id) REFERENCES SUBJECT(subject_id) on DELETE CASCADE,
+--     school_id BIGINT NOT NULL,
+--     FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE,
+--     UNIQUE(class_id,subject_id)
 
-);
+-- );
 
 CREATE TABLE TEACHER_SUBJECT(
     teacher_subject_id BIGSERIAL PRIMARY KEY,
@@ -260,20 +260,20 @@ CREATE TABLE TEACHER_SUBJECT(
     UNIQUE(teacher_id,subject_id)
 );
 
-CREATE TABLE TEACHER_SUBJECT_CLASS(
-    teacher_subject_class_id BIGSERIAL PRIMARY KEY,
-  school_id BIGINT NOT NULL,
-  FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE,
-  subject_id BIGINT NOT NULL,
-  FOREIGN KEY(subject_id) REFERENCES SUBJECT(subject_id) on DELETE CASCADE,
-  teacher_id BIGINT NOT NULL,
-  FOREIGN KEY(teacher_id) REFERENCES TEACHER(teacher_id) on DELETE CASCADE,
-  class_section_id BIGINT NOT NULL,
-  FOREIGN KEY(class_section_id) REFERENCES CLASS_SECTION(class_section_id) on DELETE CASCADE,
-  academic_year_id BIGINT NOT NULL,
-  FOREIGN KEY(academic_year_id) REFERENCES ACADEMIC_YEAR(academic_year_id) on DELETE CASCADE,
-  UNIQUE(teacher_id,class_section_id,subject_id,academic_year_id)
-);
+-- CREATE TABLE TEACHER_SUBJECT_CLASS(
+--     teacher_subject_class_id BIGSERIAL PRIMARY KEY,
+--   school_id BIGINT NOT NULL,
+--   FOREIGN KEY(school_id) REFERENCES SCHOOL(school_id) on DELETE CASCADE,
+--   subject_id BIGINT NOT NULL,
+--   FOREIGN KEY(subject_id) REFERENCES SUBJECT(subject_id) on DELETE CASCADE,
+--   teacher_id BIGINT NOT NULL,
+--   FOREIGN KEY(teacher_id) REFERENCES TEACHER(teacher_id) on DELETE CASCADE,
+--   class_section_id BIGINT NOT NULL,
+--   FOREIGN KEY(class_section_id) REFERENCES CLASS_SECTION(class_section_id) on DELETE CASCADE,
+--   academic_year_id BIGINT NOT NULL,
+--   FOREIGN KEY(academic_year_id) REFERENCES ACADEMIC_YEAR(academic_year_id) on DELETE CASCADE,
+--   UNIQUE(teacher_id,class_section_id,subject_id,academic_year_id)
+-- );
 
 CREATE TABLE PERIOD(
     period_id BIGSERIAL PRIMARY KEY,

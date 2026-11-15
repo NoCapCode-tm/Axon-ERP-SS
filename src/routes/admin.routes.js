@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createacademicyear, createclass, createsection, createsubject, deleteacademicyear, getacademicyear, getsubject, schooladminlogin, updateacademicyear, updatesubject } from "../controllers/admin.controller";
+import { assignclasssubjectteacher, assignclassteacher, createacademicyear, createclass, createsection, createsubject, deleteacademicyear, getacademicyear, getsubject, schooladminlogin, updateacademicyear, updatesubject } from "../controllers/admin.controller";
 import { verifyjwt } from "../middleware/auth.middleware";
 
 const adminrouter = Router()
@@ -11,6 +11,8 @@ adminrouter.route("/createacademicyear").post(verifyjwt,createacademicyear)
 adminrouter.route("/createclass").post(verifyjwt,createclass)
 adminrouter.route("/createsection").post(verifyjwt,createsection)
 adminrouter.route("/createsubject").post(verifyjwt,createsubject)
+adminrouter.route("/assignclassteacher").post(verifyjwt,assignclassteacher)
+adminrouter.route("/assignsubteacher").post(verifyjwt,assignclasssubjectteacher)
 
 
 //get api
